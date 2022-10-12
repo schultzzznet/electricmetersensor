@@ -34,6 +34,13 @@ import com.pi4j.io.gpio.digital.DigitalState;
 import com.pi4j.io.gpio.digital.PullResistance;
 import com.pi4j.util.Console;
 
+
+//import com.pi4j.io.gpio.GpioController;
+//import com.pi4j.io.gpio.GpioFactory;
+//import com.pi4j.io.gpio.GpioPinDigitalOutput;
+//import com.pi4j.io.gpio.PinState;
+//import com.pi4j.io.gpio.RaspiPin;
+
 /**
  * <p>This example fully describes the base usage of Pi4J by providing extensive comments in each step.</p>
  *
@@ -42,10 +49,10 @@ import com.pi4j.util.Console;
  */
 public class MinimalExample {
 
-    private static final int PIN_BUTTON = 24; // PIN 18 = BCM 24
-    private static final int PIN_LED = 22; // PIN 15 = BCM 22
+    private static final int PIN_SENSOR = 24; // PIN 18 = BCM 24
+    private static final int PIN_LED = 23; // PIN 15 = BCM 22
 
-    private static int pressCount = 0;
+    private static int sensorCount = 0;
 
     /**
      * This application blinks a led and counts the number the button is pressed. The blink speed increases with each
@@ -90,6 +97,9 @@ public class MinimalExample {
         // may include 'Platforms' and 'I/O Providers'
         var pi4j = Pi4J.newAutoContext();
 
+
+
+
         // ------------------------------------------------------------
         // Output Pi4J Context information
         // ------------------------------------------------------------
@@ -98,13 +108,14 @@ public class MinimalExample {
         // approach, we print out the info of these. This can be removed
         // from your own application.
         // OPTIONAL
-        PrintInfo.printLoadedPlatforms(console, pi4j);
-        PrintInfo.printDefaultPlatform(console, pi4j);
-        PrintInfo.printProviders(console, pi4j);
+        //PrintInfo.printLoadedPlatforms(console, pi4j);
+        //PrintInfo.printDefaultPlatform(console, pi4j);
+        //PrintInfo.printProviders(console, pi4j);
 
         // Here we will create I/O interfaces for a (GPIO) digital output
         // and input pin. We define the 'provider' to use PiGpio to control
         // the GPIO.
+
         var ledConfig = DigitalOutput.newConfigBuilder(pi4j)
                 .id("led")
                 .name("LED Flasher")
@@ -114,33 +125,34 @@ public class MinimalExample {
                 .provider("pigpio-digital-output");
         var led = pi4j.create(ledConfig);
 
-        var buttonConfig = DigitalInput.newConfigBuilder(pi4j)
-                .id("button")
-                .name("Press button")
-                .address(PIN_BUTTON)
+
+        var sensorConfig = DigitalInput.newConfigBuilder(pi4j)
+                .id("sensor")
+                .name("Sensor activat")
+                .address(PIN_SENSOR)
                 .pull(PullResistance.PULL_DOWN)
                 .debounce(3000L)
                 .provider("pigpio-digital-input");
-        var button = pi4j.create(buttonConfig);
-        button.addListener(e -> {
+        var sensor = pi4j.create(sensorConfig);
+
+        sensor.addListener(e -> {
             if (e.state() == DigitalState.LOW) {
-                pressCount++;
-                console.println("Button was pressed for the " + pressCount + "th time");
+                sensorCount++;
+                console.println("Sensor was activated for the " + sensorCount + "th time");
+
+                led.high();
+                try { Thread.sleep(100 ); } catch (Exception exception) {}
+                led.low();
+
             }
         });
 
         // OPTIONAL: print the registry
-        PrintInfo.printRegistry(console, pi4j);
+        //PrintInfo.printRegistry(console, pi4j);
 
-        while (pressCount < 5) {
-            if (led.equals(DigitalState.HIGH)) {
-                console.println("LED low");
-                led.low();
-            } else {
-                console.println("LED high");
-                led.high();
-            }
-            Thread.sleep(500 / (pressCount + 1));
+
+        while (sensorCount >= 0) {
+            try { Thread.sleep(500 ); } catch (Exception exception) {}
         }
 
         // ------------------------------------------------------------
